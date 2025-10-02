@@ -1,0 +1,91 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.vscode
+.idea
+*.log
+dist
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# Expo
+.expo/
+
+# Metro bundler
+.metro-cache/
+
+# Temporary folders
+tmp/
+temp/
+
+# Build outputs
+dist/
+build/
+web-build/
+android/
+ios/
+
+# Certificates
+*.p12
+*.pem
+*.key
+*.mobileprovision
+
+# Debug
+*.apk
+*.ipa
+
+# Local development
+.expo-shared/

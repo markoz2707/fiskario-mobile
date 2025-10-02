@@ -1,0 +1,116 @@
+# Fiskario Mobile Simulator Configuration
+# This file contains settings for mobile simulator development
+
+# Simulator preferences
+SIMULATOR_PLATFORM=android
+SIMULATOR_DEVICE=Pixel_4_API_30
+SIMULATOR_SKIN=1080x1920
+
+# Development settings
+CLEAR_CACHE_ON_START=true
+RESET_METRO_ON_ERROR=true
+AUTO_RELOAD=true
+
+# Network settings
+CONNECT_TO_API=true
+API_HOST=localhost
+API_PORT=80
+
+# Debugging settings
+DEBUG_MODE=true
+PERFORMANCE_MONITOR=false
+REDUX_LOGGER=false
+
+# Build settings
+PREBUILD_ON_START=false
+CLEAR_BUILD_CACHE=false
+
+# Testing settings
+RUN_TESTS_ON_START=false
+E2E_TESTING=false
+
+# Notification settings (for testing)
+ENABLE_PUSH_NOTIFICATIONS=false
+MOCK_NOTIFICATION_DATA=false
+
+# Camera and media settings
+MOCK_CAMERA=false
+MOCK_GALLERY=false
+MOCK_LOCATION=false
+
+# Development tools
+ENABLE_REACTOTRON=false
+ENABLE_FLIPPER=false
+
+# Expo settings
+EXPO_DEBUG=true
+EXPO_WEB_DEBUG=false
+
+# Custom environment variables for simulator
+SIMULATOR_ENV=development
+LOG_LEVEL=debug
+
+# Android specific settings
+ANDROID_AVD_NAME=Fiskario_Simulator
+ANDROID_SDK_VERSION=30
+ANDROID_BUILD_TOOLS_VERSION=30.0.3
+
+# iOS specific settings (macOS only)
+IOS_SIMULATOR_DEVICE=iPhone_13
+IOS_DEPLOYMENT_TARGET=13.0
+
+# Performance settings
+METRO_MEMORY_LIMIT=4096
+METRO_WORKER_PROCESSES=2
+METRO_MAX_WORKERS=4
+
+# Cache settings
+METRO_CACHE_VERSION=1
+EXPO_CACHE_VERSION=1
+
+# Development server settings
+METRO_SERVER_HOST=localhost
+METRO_SERVER_PORT=19006
+EXPO_SERVER_PORT=19000
+
+# Hot reload settings
+FAST_REFRESH=true
+HMR_TIMEOUT=30000
+
+# Bundle settings
+BUNDLE_STORE_ENABLED=false
+BUNDLE_CACHE_ENABLED=true
+
+# Error handling
+STOP_ON_ERROR=false
+SHOW_ERROR_OVERLAY=true
+
+# Logging settings
+CONSOLE_LOG_ENABLED=true
+REMOTE_DEBUG_ENABLED=false
+
+# Network debugging
+NETWORK_INSPECT_ENABLED=false
+NETWORK_LOG_ENABLED=false
+
+# Database settings (WatermelonDB)
+DB_LOG_LEVEL=dev
+SYNC_ENABLED=true
+
+# Security settings (development only)
+ALLOW_INSECURE_CONNECTIONS=true
+DISABLE_SSL_PINNING=true
+
+# Feature flags
+ENABLE_ANALYTICS=false
+ENABLE_CRASH_REPORTING=false
+ENABLE_REMOTE_CONFIG=false
+
+# Third-party integrations (development keys)
+GOOGLE_MAPS_API_KEY=your-dev-google-maps-key
+STRIPE_PUBLISHABLE_KEY=pk_test_dev_stripe_key
+
+# Backup and restore settings
+AUTO_BACKUP_ENABLED=false
+BACKUP_FREQUENCY=never
+RESTORE_ON_START=false

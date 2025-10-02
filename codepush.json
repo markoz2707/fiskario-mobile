@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "deploymentKey": "your-codepush-deployment-key-ios"
+  },
+  "android": {
+    "deploymentKey": "your-codepush-deployment-key-android"
+  }
+}
