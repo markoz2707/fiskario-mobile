@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { RootState } from '../../store';
 import { setCurrentCompany } from '../../store/slices/companySlice';
 import { useGetCompaniesQuery } from '../../store/api/apiSlice';

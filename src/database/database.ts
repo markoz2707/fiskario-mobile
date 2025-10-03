@@ -7,6 +7,10 @@ import InvoiceItem from './models/InvoiceItem';
 import Cost from './models/Cost';
 import Declaration from './models/Declaration';
 import SyncQueue from './models/SyncQueue';
+import ZUSEmployee from './models/ZUSEmployee';
+import ZUSRegistration from './models/ZUSRegistration';
+import ZUSReport from './models/ZUSReport';
+import ZUSContribution from './models/ZUSContribution';
 
 const adapter = new SQLiteAdapter({
   schema,
@@ -17,6 +21,8 @@ const adapter = new SQLiteAdapter({
   },
 });
 
+console.log('Database adapter created successfully');
+
 export const database = new Database({
   adapter,
   modelClasses: [
@@ -26,5 +32,9 @@ export const database = new Database({
     Cost,
     Declaration,
     SyncQueue,
+    ZUSEmployee,
+    ZUSRegistration,
+    ZUSReport,
+    ZUSContribution,
   ],
 });

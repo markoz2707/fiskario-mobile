@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootState } from '../index';
+import { API_BASE_URL } from '../../config';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:3000/api',
+  baseUrl: API_BASE_URL,
   prepareHeaders: async (headers, { getState }) => {
     const state = getState() as RootState;
     const token = state.auth?.token;
@@ -33,7 +34,7 @@ export const apiSlice = createApi({
       query: (credentials) => ({
         url: '/auth/login',
         method: 'POST',
-        body: credentials,
+        body: { username: credentials.email, password: credentials.password },
       }),
       invalidatesTags: ['Auth'],
     }),

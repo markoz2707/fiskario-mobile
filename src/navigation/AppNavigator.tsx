@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 // Auth screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -12,9 +12,11 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 
 // Main screens
 import DashboardScreen from '../screens/main/DashboardScreen';
+import CompanyListScreen from '../screens/main/CompanyListScreen';
 import CompanyCreatorScreen from '../screens/main/CompanyCreatorScreen';
 import InvoicingScreen from '../screens/main/InvoicingScreen';
-import InvoiceDetailScreen from '../screens/main/InvoiceDetailScreen';
+import InvoicePreviewScreen from '../screens/main/InvoicePreviewScreen';
+import InvoiceScannerScreen from '../screens/main/InvoiceScannerScreen';
 import CostsScreen from '../screens/main/CostsScreen';
 import DeclarationsScreen from '../screens/main/DeclarationsScreen';
 import DeclarationCreatorScreen from '../screens/main/DeclarationCreatorScreen';
@@ -23,10 +25,6 @@ import ZUSScreen from '../screens/main/ZUSScreen';
 import ReportsScreen from '../screens/main/ReportsScreen';
 import NotificationsScreen from '../screens/main/NotificationsScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
-
-// Company screens
-import CompanyListScreen from '../screens/company/CompanyListScreen';
-import CompanyDetailScreen from '../screens/company/CompanyDetailScreen';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -41,13 +39,10 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   Dashboard: undefined;
-  Companies: undefined;
   Invoicing: undefined;
   Costs: undefined;
   Declarations: undefined;
   ZUS: undefined;
-  Reports: undefined;
-  Notifications: undefined;
   Settings: undefined;
 };
 
@@ -63,11 +58,18 @@ export type InvoicingStackParamList = {
   InvoiceCreator: undefined;
 };
 
+export type SettingsStackParamList = {
+  Settings: undefined;
+  Notifications: undefined;
+  Reports: undefined;
+};
+
 const RootStack = createStackNavigator<RootStackParamList>();
 const AuthStack = createStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 const CompanyStack = createStackNavigator<CompanyStackParamList>();
 const InvoicingStack = createStackNavigator<InvoicingStackParamList>();
+const SettingsStack = createStackNavigator<SettingsStackParamList>();
 
 const AuthNavigator = () => {
   return (
@@ -88,7 +90,7 @@ const CompanyNavigator = () => {
       />
       <CompanyStack.Screen
         name="CompanyDetail"
-        component={CompanyDetailScreen}
+        component={DashboardScreen}
         options={{ title: 'Szczegóły firmy' }}
       />
       <CompanyStack.Screen
@@ -106,14 +108,41 @@ const InvoicingNavigator = () => {
       <InvoicingStack.Screen
         name="InvoiceList"
         component={InvoicingScreen}
-        options={{ title: 'Faktury' }}
+        options={{ headerShown: false }}
       />
       <InvoicingStack.Screen
         name="InvoiceDetail"
-        component={InvoiceDetailScreen}
+        component={InvoicePreviewScreen}
         options={{ title: 'Szczegóły faktury' }}
       />
+      <InvoicingStack.Screen
+        name="InvoiceCreator"
+        component={InvoiceScannerScreen}
+        options={{ title: 'Skaner faktur' }}
+      />
     </InvoicingStack.Navigator>
+  );
+};
+
+const SettingsNavigator = () => {
+  return (
+    <SettingsStack.Navigator>
+      <SettingsStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Ustawienia' }}
+      />
+      <SettingsStack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ title: 'Powiadomienia' }}
+      />
+      <SettingsStack.Screen
+        name="Reports"
+        component={ReportsScreen}
+        options={{ title: 'Raporty' }}
+      />
+    </SettingsStack.Navigator>
   );
 };
 
@@ -128,9 +157,6 @@ const MainTabNavigator = () => {
             case 'Dashboard':
               iconName = 'dashboard';
               break;
-            case 'Companies':
-              iconName = 'business';
-              break;
             case 'Invoicing':
               iconName = 'receipt';
               break;
@@ -143,12 +169,6 @@ const MainTabNavigator = () => {
             case 'ZUS':
               iconName = 'group';
               break;
-            case 'Reports':
-              iconName = 'analytics';
-              break;
-            case 'Notifications':
-              iconName = 'notifications';
-              break;
             case 'Settings':
               iconName = 'settings';
               break;
@@ -160,17 +180,13 @@ const MainTabNavigator = () => {
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
+        headerShown: false,
       })}
     >
       <MainTab.Screen
         name="Dashboard"
         component={DashboardScreen}
         options={{ title: 'Panel' }}
-      />
-      <MainTab.Screen
-        name="Companies"
-        component={CompanyNavigator}
-        options={{ title: 'Firmy' }}
       />
       <MainTab.Screen
         name="Invoicing"
@@ -193,18 +209,8 @@ const MainTabNavigator = () => {
         options={{ title: 'ZUS' }}
       />
       <MainTab.Screen
-        name="Reports"
-        component={ReportsScreen}
-        options={{ title: 'Raporty' }}
-      />
-      <MainTab.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ title: 'Powiadomienia' }}
-      />
-      <MainTab.Screen
         name="Settings"
-        component={SettingsScreen}
+        component={SettingsNavigator}
         options={{ title: 'Ustawienia' }}
       />
     </MainTab.Navigator>
@@ -218,7 +224,10 @@ const AppNavigator = () => {
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <RootStack.Screen name="Main" component={MainTabNavigator} />
+          <>
+            <RootStack.Screen name="Main" component={MainTabNavigator} />
+            <RootStack.Screen name="CompanyStack" component={CompanyNavigator} />
+          </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />
         )}

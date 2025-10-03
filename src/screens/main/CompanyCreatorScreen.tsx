@@ -14,7 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { CompanyStackParamList } from '../../navigation/AppNavigator';
 import { useCreateCompanyMutation } from '../../store/api/apiSlice';
 import { addCompany } from '../../store/slices/companySlice';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type CompanyCreatorScreenNavigationProp = StackNavigationProp<CompanyStackParamList, 'CompanyCreator'>;
 
@@ -117,22 +117,29 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       const companyData = {
-        ...formData,
+        name: formData.name,
+        nip: formData.nip,
+        regon: formData.regon,
         address: {
           street: formData.street,
           city: formData.city,
           postalCode: formData.postalCode,
           country: formData.country,
         },
+        vatStatus: formData.vatStatus,
+        taxOffice: formData.taxOffice,
         isActive: true,
       };
 
+      console.log('Sending company data:', companyData);
       const result = await createCompany(companyData).unwrap();
+      console.log('Company creation successful:', result);
       dispatch(addCompany(result));
       Alert.alert('Sukces', 'Firma została dodana', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (err: any) {
+      console.log('Company creation error:', err);
       Alert.alert('Błąd', err.data?.message || 'Wystąpił błąd podczas dodawania firmy');
     }
   };
@@ -146,7 +153,7 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={24} color="#007AFF" />
+            <MaterialIcons name="arrow-back" size={24} color="#007AFF" />
           </TouchableOpacity>
           <Text style={styles.title}>Dodaj firmę</Text>
           <View style={{ width: 24 }} />

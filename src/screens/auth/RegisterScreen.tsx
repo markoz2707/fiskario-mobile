@@ -14,6 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../navigation/AppNavigator';
 import { useRegisterMutation } from '../../store/api/apiSlice';
 import { setError } from '../../store/slices/authSlice';
+import { API_BASE_URL } from '../../config';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -33,6 +34,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useDispatch();
 
   const handleRegister = async () => {
+    console.log('Registration attempt with form data:', formData);
     if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
       Alert.alert('Błąd', 'Wypełnij wszystkie pola');
       return;
@@ -49,15 +51,19 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
+      console.log('Calling register API...');
       await register(formData).unwrap();
+      console.log('Register API call successful');
       Alert.alert(
         'Sukces',
         'Konto zostało utworzone. Możesz się teraz zalogować.',
         [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
       );
     } catch (err: any) {
-      dispatch(setError(err.data?.message || 'Błąd rejestracji'));
-      Alert.alert('Błąd rejestracji', err.data?.message || 'Wystąpił błąd podczas rejestracji');
+      console.log('Register API call failed:', err);
+      const errorMessage = err.data?.message || 'Wystąpił błąd podczas rejestracji';
+      dispatch(setError(errorMessage));
+      Alert.alert('Błąd rejestracji', `${API_BASE_URL}/auth/register: ${errorMessage}`);
     }
   };
 

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { InvoicingStackParamList } from '../../navigation/AppNavigator';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import {
   useSubmitInvoiceToKSeFMutation,
   useCheckKSeFInvoiceStatusQuery,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#f5f5f5',
   },
   title: {
     fontSize: 20,

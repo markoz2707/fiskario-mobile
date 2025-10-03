@@ -14,6 +14,7 @@ import { AuthStackParamList } from '../../navigation/AppNavigator';
 import { useLoginMutation } from '../../store/api/apiSlice';
 import { setCredentials, setError } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
+import { API_BASE_URL } from '../../config';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -29,17 +30,22 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { error } = useSelector((state: RootState) => state.auth);
 
   const handleLogin = async () => {
+    console.log('Login attempt with email:', email);
     if (!email || !password) {
       Alert.alert('Błąd', 'Wprowadź email i hasło');
       return;
     }
 
     try {
+      console.log('Calling login API...');
       const result = await login({ email, password }).unwrap();
-      dispatch(setCredentials({ user: result.user, token: result.token }));
+      console.log('Login API call successful:', result);
+      dispatch(setCredentials({ user: result.user, token: result.access_token }));
     } catch (err: any) {
-      dispatch(setError(err.data?.message || 'Błąd logowania'));
-      Alert.alert('Błąd logowania', err.data?.message || 'Wystąpił błąd podczas logowania');
+      console.log('Login API call failed:', err);
+      const errorMessage = err.data?.message || 'Błąd logowania';
+      dispatch(setError(errorMessage));
+      Alert.alert('Błąd logowania', `${API_BASE_URL}/auth/login: ${errorMessage}`);
     }
   };
 
