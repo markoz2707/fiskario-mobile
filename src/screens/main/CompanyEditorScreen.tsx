@@ -9,17 +9,26 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { CompanyStackParamList } from '../../navigation/AppNavigator';
-import { useCreateCompanyMutation, useGetTaxFormsQuery, useCreateCompanyTaxSettingsMutation } from '../../store/api/apiSlice';
-import { addCompany } from '../../store/slices/companySlice';
+import {
+  useUpdateCompanyMutation,
+  useGetTaxFormsQuery,
+  useGetCompanyTaxSettingsQuery,
+  useUpdateBulkCompanyTaxSettingsMutation
+} from '../../store/api/apiSlice';
+import { updateCompany } from '../../store/slices/companySlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import { RootState } from '../../store';
 
-type CompanyCreatorScreenNavigationProp = StackNavigationProp<CompanyStackParamList, 'CompanyCreator'>;
+type CompanyEditorScreenNavigationProp = StackNavigationProp<CompanyStackParamList, 'CompanyEditor'>;
+type CompanyEditorScreenRouteProp = RouteProp<CompanyStackParamList, 'CompanyEditor'>;
 
 interface Props {
-  navigation: CompanyCreatorScreenNavigationProp;
+  navigation: CompanyEditorScreenNavigationProp;
+  route: CompanyEditorScreenRouteProp;
 }
 
 interface CompanyFormData {
@@ -37,7 +46,11 @@ interface CompanyFormData {
   skipTaxConfiguration?: boolean;
 }
 
-const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
+const CompanyEditorScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { companyId } = route.params;
+  const dispatch = useDispatch();
+  const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
+
   const [formData, setFormData] = useState<CompanyFormData>({
     name: '',
     nip: '',
@@ -52,9 +65,9 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
     taxConfigurationNotes: '',
     skipTaxConfiguration: false,
   });
-  const [createCompany, { isLoading }] = useCreateCompanyMutation();
-  const [createCompanyTaxSettings] = useCreateCompanyTaxSettingsMutation();
-  const dispatch = useDispatch();
+
+  const [updateCompanyMutation, { isLoading }] = useUpdateCompanyMutation();
+  const [updateCompanyTaxSettings] = useUpdateBulkCompanyTaxSettingsMutation();
 
   // Tax configuration state
   const [isTaxSectionExpanded, setIsTaxSectionExpanded] = useState(false);
@@ -63,6 +76,9 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
 
   // Fetch tax forms
   const { data: taxForms, isLoading: isLoadingTaxFormsQuery, error: taxFormsQueryError } = useGetTaxFormsQuery({});
+
+  // Fetch existing tax settings
+  const { data: existingTaxSettings, isLoading: isLoadingTaxSettings } = useGetCompanyTaxSettingsQuery(companyId);
 
   // Handle tax forms loading and error states
   useEffect(() => {
@@ -78,6 +94,43 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
       }
     }
   }, [isLoadingTaxFormsQuery, taxFormsQueryError]);
+
+  // Load existing company data and tax settings
+  useEffect(() => {
+    if (currentCompany && currentCompany.id === companyId) {
+      setFormData({
+        name: currentCompany.name || '',
+        nip: currentCompany.nip || '',
+        regon: currentCompany.regon || '',
+        street: currentCompany.address?.street || '',
+        city: currentCompany.address?.city || '',
+        postalCode: currentCompany.address?.postalCode || '',
+        country: currentCompany.address?.country || 'Polska',
+        vatStatus: currentCompany.vatStatus || 'active',
+        taxOffice: currentCompany.taxOffice || '',
+        selectedTaxFormIds: [],
+        taxConfigurationNotes: '',
+        skipTaxConfiguration: false,
+      });
+    }
+  }, [currentCompany, companyId]);
+
+  // Load existing tax settings when available
+  useEffect(() => {
+    if (existingTaxSettings) {
+      setFormData(prev => ({
+        ...prev,
+        selectedTaxFormIds: existingTaxSettings.selectedTaxFormIds || [],
+        taxConfigurationNotes: existingTaxSettings.notes || '',
+        skipTaxConfiguration: existingTaxSettings.skipTaxConfiguration || false,
+      }));
+
+      // Expand tax section if there are existing settings
+      if (existingTaxSettings.selectedTaxFormIds?.length > 0 || existingTaxSettings.skipTaxConfiguration) {
+        setIsTaxSectionExpanded(true);
+      }
+    }
+  }, [existingTaxSettings]);
 
   const validateNIP = (nip: string): boolean => {
     const cleanNIP = nip.replace(/[-\s]/g, '');
@@ -168,6 +221,7 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       const companyData = {
+        id: companyId,
         name: formData.name,
         nip: formData.nip,
         regon: formData.regon,
@@ -182,47 +236,56 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
         isActive: true,
       };
 
-      console.log('Sending company data:', companyData);
-      const result = await createCompany(companyData).unwrap();
-      console.log('Company creation successful:', result);
-      dispatch(addCompany(result));
+      console.log('Updating company data:', companyData);
+      const result = await updateCompanyMutation(companyData).unwrap();
+      console.log('Company update successful:', result);
+      dispatch(updateCompany(result));
 
-      // Handle tax configuration if tax forms are selected or if user chose to skip
+      // Handle tax configuration updates if tax forms are selected or if user chose to skip
       if (formData.selectedTaxFormIds.length > 0 || formData.skipTaxConfiguration) {
         try {
           const taxSettingsData = {
-            companyId: result.id,
+            companyId: companyId,
             selectedTaxFormIds: formData.selectedTaxFormIds,
             skipTaxConfiguration: formData.skipTaxConfiguration,
             notes: formData.taxConfigurationNotes,
           };
 
-          await createCompanyTaxSettings(taxSettingsData).unwrap();
-          console.log('Tax settings created successfully');
+          await updateCompanyTaxSettings(taxSettingsData).unwrap();
+          console.log('Tax settings updated successfully');
         } catch (taxErr: any) {
-          console.log('Tax settings creation error:', taxErr);
+          console.log('Tax settings update error:', taxErr);
           // Don't fail the entire process if tax settings fail
           Alert.alert(
             'Uwaga',
-            'Firma została utworzona, ale wystąpił błąd podczas konfiguracji podatkowej. Możesz skonfigurować to później w ustawieniach firmy.',
+            'Firma została zaktualizowana, ale wystąpił błąd podczas aktualizacji konfiguracji podatkowej. Możesz skonfigurować to później w ustawieniach firmy.',
             [{ text: 'OK', onPress: () => navigation.goBack() }]
           );
           return;
         }
       }
 
-      Alert.alert('Sukces', 'Firma została dodana', [
+      Alert.alert('Sukces', 'Firma została zaktualizowana', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (err: any) {
-      console.log('Company creation error:', err);
-      Alert.alert('Błąd', err.data?.message || 'Wystąpił błąd podczas dodawania firmy');
+      console.log('Company update error:', err);
+      Alert.alert('Błąd', err.data?.message || 'Wystąpił błąd podczas aktualizacji firmy');
     }
   };
 
   const updateField = (field: keyof CompanyFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  if (isLoadingTaxSettings) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Ładowanie danych firmy...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -476,7 +539,7 @@ const CompanyCreatorScreen: React.FC<Props> = ({ navigation }) => {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.buttonText}>Zapisz firmę</Text>
+              <Text style={styles.buttonText}>Zapisz zmiany</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -493,19 +556,17 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#f5f5f5',
+    padding: 50,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
   },
   form: {
     padding: 15,
@@ -593,17 +654,6 @@ const styles = StyleSheet.create({
   },
   taxConfigurationContent: {
     padding: 15,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    marginLeft: 10,
-    fontSize: 16,
-    color: '#666',
   },
   errorContainer: {
     alignItems: 'center',
@@ -710,4 +760,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CompanyCreatorScreen;
+export default CompanyEditorScreen;

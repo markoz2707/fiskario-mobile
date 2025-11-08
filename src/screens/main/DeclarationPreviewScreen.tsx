@@ -22,6 +22,9 @@ interface DeclarationPreviewData {
     totalAmount?: number;
     vatDue?: number;
     taxDue?: number;
+    totalAcquisitions?: number;
+    totalSupplies?: number;
+    transactionCount?: number;
   };
 }
 
@@ -101,15 +104,30 @@ const DeclarationPreviewScreen = ({ navigation, route }: any) => {
         };
 
       case 'PIT-36':
+      case 'PIT-36L':
         return {
           taxDue: formData.fields.taxDue || 0,
           totalAmount: formData.fields.taxDue || 0,
         };
 
       case 'CIT-8':
+      case 'CIT-8AB':
         return {
           taxDue: formData.fields.taxDue || 0,
           totalAmount: formData.fields.taxDue || 0,
+        };
+
+      case 'VAT-UE':
+        return {
+          totalAcquisitions: formData.fields.totalAcquisitions || 0,
+          totalSupplies: formData.fields.totalSupplies || 0,
+          vatDue: (formData.fields.totalAcquisitionsVAT || 0) - (formData.fields.totalSuppliesVAT || 0),
+        };
+
+      case 'PCC-3':
+        return {
+          taxDue: formData.fields.totalTaxDue || 0,
+          transactionCount: formData.fields.transactionCount || 0,
         };
 
       default:
@@ -266,13 +284,47 @@ const DeclarationPreviewScreen = ({ navigation, route }: any) => {
           </>
         )}
 
-        {(previewData.type === 'PIT-36' || previewData.type === 'CIT-8') && (
+        {(previewData.type === 'PIT-36' || previewData.type === 'PIT-36L' || previewData.type === 'CIT-8' || previewData.type === 'CIT-8AB') && (
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Podatek do zapłaty:</Text>
             <Text style={[styles.summaryValue, styles.positiveAmount]}>
               {previewData.summary.taxDue?.toFixed(2)} zł
             </Text>
           </View>
+        )}
+
+        {previewData.type === 'VAT-UE' && (
+          <>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Nabycia wewnątrzwspólnotowe:</Text>
+              <Text style={styles.summaryValue}>
+                {previewData.summary.totalAcquisitions?.toFixed(2)} zł
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Dostawy wewnątrzwspólnotowe:</Text>
+              <Text style={styles.summaryValue}>
+                {previewData.summary.totalSupplies?.toFixed(2)} zł
+              </Text>
+            </View>
+          </>
+        )}
+
+        {previewData.type === 'PCC-3' && (
+          <>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Liczba transakcji:</Text>
+              <Text style={styles.summaryValue}>
+                {previewData.summary.transactionCount}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Podatek PCC:</Text>
+              <Text style={[styles.summaryValue, styles.positiveAmount]}>
+                {previewData.summary.taxDue?.toFixed(2)} zł
+              </Text>
+            </View>
+          </>
         )}
       </View>
     );

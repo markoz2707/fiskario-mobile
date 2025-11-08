@@ -38,6 +38,10 @@ const CompanyListScreen: React.FC = () => {
     navigation.navigate('CompanyCreator' as never);
   };
 
+  const handleEditCompany = (company: Company) => {
+    (navigation as any).navigate('CompanyEditor', { companyId: company.id });
+  };
+
   const renderCompanyItem = ({ item }: { item: Company }) => (
     <TouchableOpacity
       style={[
@@ -66,6 +70,12 @@ const CompanyListScreen: React.FC = () => {
             <Icon name="check" size={20} color="#007AFF" />
           </View>
         )}
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => handleEditCompany(item)}
+        >
+          <Icon name="edit" size={20} color="#007AFF" />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -214,6 +224,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#E3F2FD',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  editButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
   },
   emptyContainer: {
     flex: 1,

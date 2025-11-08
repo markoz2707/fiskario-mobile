@@ -14,9 +14,12 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import DashboardScreen from '../screens/main/DashboardScreen';
 import CompanyListScreen from '../screens/main/CompanyListScreen';
 import CompanyCreatorScreen from '../screens/main/CompanyCreatorScreen';
+import CompanyEditorScreen from '../screens/main/CompanyEditorScreen';
 import InvoicingScreen from '../screens/main/InvoicingScreen';
 import InvoicePreviewScreen from '../screens/main/InvoicePreviewScreen';
 import InvoiceScannerScreen from '../screens/main/InvoiceScannerScreen';
+import InvoiceCreatorScreen from '../screens/main/InvoiceCreatorScreen';
+import CustomerSelectorScreen from '../screens/main/CustomerSelectorScreen';
 import CostsScreen from '../screens/main/CostsScreen';
 import DeclarationsScreen from '../screens/main/DeclarationsScreen';
 import DeclarationCreatorScreen from '../screens/main/DeclarationCreatorScreen';
@@ -25,6 +28,8 @@ import ZUSScreen from '../screens/main/ZUSScreen';
 import ReportsScreen from '../screens/main/ReportsScreen';
 import NotificationsScreen from '../screens/main/NotificationsScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
+import TaxRulesScreen from '../screens/main/TaxRulesScreen';
+import DeadlinesScreen from '../screens/main/DeadlinesScreen';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -38,31 +43,36 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Dashboard: undefined;
-  Invoicing: undefined;
-  Costs: undefined;
-  Declarations: undefined;
-  ZUS: undefined;
-  Settings: undefined;
-};
+   Dashboard: undefined;
+   Invoicing: undefined;
+   Costs: undefined;
+   Declarations: undefined;
+   Deadlines: undefined;
+   ZUS: undefined;
+   Settings: undefined;
+ };
 
 export type CompanyStackParamList = {
-  CompanyList: undefined;
-  CompanyDetail: { companyId: string };
-  CompanyCreator: undefined;
-};
+   CompanyList: undefined;
+   CompanyDetail: { companyId: string };
+   CompanyCreator: undefined;
+   CompanyEditor: { companyId: string };
+ };
 
 export type InvoicingStackParamList = {
-  InvoiceList: undefined;
-  InvoiceDetail: { invoiceId: string };
-  InvoiceCreator: undefined;
-};
+   InvoiceList: undefined;
+   InvoiceDetail: { invoiceId: string };
+   InvoiceCreator: { selectedCustomer?: any } | undefined;
+   CustomerSelector: { onCustomerSelected?: (customer: any) => void };
+   CustomerCreator: { onCustomerCreated?: (customer: any) => void };
+ };
 
 export type SettingsStackParamList = {
-  Settings: undefined;
-  Notifications: undefined;
-  Reports: undefined;
-};
+   Settings: undefined;
+   Notifications: undefined;
+   Reports: undefined;
+   TaxRules: undefined;
+ };
 
 const RootStack = createStackNavigator<RootStackParamList>();
 const AuthStack = createStackNavigator<AuthStackParamList>();
@@ -94,35 +104,50 @@ const CompanyNavigator = () => {
         options={{ title: 'Szczegóły firmy' }}
       />
       <CompanyStack.Screen
-        name="CompanyCreator"
-        component={CompanyCreatorScreen}
-        options={{ title: 'Dodaj firmę' }}
-      />
+         name="CompanyCreator"
+         component={CompanyCreatorScreen}
+         options={{ title: 'Dodaj firmę' }}
+       />
+      <CompanyStack.Screen
+         name="CompanyEditor"
+         component={CompanyEditorScreen}
+         options={{ title: 'Edytuj firmę' }}
+       />
     </CompanyStack.Navigator>
   );
 };
 
 const InvoicingNavigator = () => {
-  return (
-    <InvoicingStack.Navigator>
-      <InvoicingStack.Screen
-        name="InvoiceList"
-        component={InvoicingScreen}
-        options={{ headerShown: false }}
-      />
-      <InvoicingStack.Screen
-        name="InvoiceDetail"
-        component={InvoicePreviewScreen}
-        options={{ title: 'Szczegóły faktury' }}
-      />
-      <InvoicingStack.Screen
-        name="InvoiceCreator"
-        component={InvoiceScannerScreen}
-        options={{ title: 'Skaner faktur' }}
-      />
-    </InvoicingStack.Navigator>
-  );
-};
+   return (
+     <InvoicingStack.Navigator>
+       <InvoicingStack.Screen
+         name="InvoiceList"
+         component={InvoicingScreen}
+         options={{ headerShown: false }}
+       />
+       <InvoicingStack.Screen
+         name="InvoiceDetail"
+         component={InvoicePreviewScreen}
+         options={{ title: 'Szczegóły faktury' }}
+       />
+       <InvoicingStack.Screen
+         name="InvoiceCreator"
+         component={InvoiceCreatorScreen}
+         options={{ title: 'Nowa faktura' }}
+       />
+       <InvoicingStack.Screen
+         name="CustomerSelector"
+         component={CustomerSelectorScreen}
+         options={{ title: 'Wybierz kontrahenta' }}
+       />
+       <InvoicingStack.Screen
+         name="CustomerCreator"
+         component={CompanyCreatorScreen}
+         options={{ title: 'Dodaj kontrahenta' }}
+       />
+     </InvoicingStack.Navigator>
+   );
+ };
 
 const SettingsNavigator = () => {
   return (
@@ -141,6 +166,11 @@ const SettingsNavigator = () => {
         name="Reports"
         component={ReportsScreen}
         options={{ title: 'Raporty' }}
+      />
+      <SettingsStack.Screen
+        name="TaxRules"
+        component={TaxRulesScreen}
+        options={{ title: 'Reguły podatkowe' }}
       />
     </SettingsStack.Navigator>
   );
@@ -166,6 +196,9 @@ const MainTabNavigator = () => {
             case 'Declarations':
               iconName = 'assignment';
               break;
+            case 'Deadlines':
+              iconName = 'event-note';
+              break;
             case 'ZUS':
               iconName = 'group';
               break;
@@ -173,10 +206,10 @@ const MainTabNavigator = () => {
               iconName = 'settings';
               break;
             default:
-              iconName = 'circle';
+              iconName = 'help-outline';
           }
 
-          return <Icon name={iconName} size={size} color={color} />;
+          return <Icon name={iconName as any} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
@@ -202,6 +235,11 @@ const MainTabNavigator = () => {
         name="Declarations"
         component={DeclarationsScreen}
         options={{ title: 'Deklaracje' }}
+      />
+      <MainTab.Screen
+        name="Deadlines"
+        component={DeadlinesScreen}
+        options={{ title: 'Terminy' }}
       />
       <MainTab.Screen
         name="ZUS"

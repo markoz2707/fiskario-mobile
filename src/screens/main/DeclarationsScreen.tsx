@@ -23,6 +23,13 @@ interface DeclarationItem {
   upoNumber?: string;
 }
 
+interface FormType {
+  code: string;
+  name: string;
+  category: string;
+  description: string;
+}
+
 interface DeadlineItem {
   type: string;
   period: string;
@@ -35,6 +42,7 @@ const DeclarationsScreen = ({ navigation }: any) => {
   const { token } = useSelector((state: RootState) => state.auth as any);
   const [declarations, setDeclarations] = useState<DeclarationItem[]>([]);
   const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
+  const [formTypes, setFormTypes] = useState<FormType[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,6 +50,7 @@ const DeclarationsScreen = ({ navigation }: any) => {
     if (currentCompany) {
       loadDeclarations();
       loadDeadlines();
+      loadFormTypes();
     }
   }, [currentCompany]);
 
@@ -86,9 +95,33 @@ const DeclarationsScreen = ({ navigation }: any) => {
     }
   };
 
+  const loadFormTypes = async () => {
+    try {
+      // Load available tax form types from the backend
+      const response = await fetch(
+        `http://localhost:3000/tax-rules/forms`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setFormTypes(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading form types:', error);
+    }
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadDeclarations(), loadDeadlines()]);
+    await Promise.all([loadDeclarations(), loadDeadlines(), loadFormTypes()]);
     setRefreshing(false);
   };
 
@@ -156,6 +189,20 @@ const DeclarationsScreen = ({ navigation }: any) => {
     );
   };
 
+  const renderFormTypeItem = ({ item }: { item: FormType }) => (
+    <TouchableOpacity
+      style={styles.formTypeItem}
+      onPress={() => navigation.navigate('DeclarationPreview', { formType: item })}
+    >
+      <View style={styles.formTypeHeader}>
+        <Text style={styles.formTypeCode}>{item.code}</Text>
+        <Text style={styles.formTypeCategory}>{item.category}</Text>
+      </View>
+      <Text style={styles.formTypeName}>{item.name}</Text>
+      <Text style={styles.formTypeDescription}>{item.description}</Text>
+    </TouchableOpacity>
+  );
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -193,6 +240,21 @@ const DeclarationsScreen = ({ navigation }: any) => {
           <Text style={styles.actionButtonText}>Rejestr VAT</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Available Form Types */}
+      {formTypes.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Dostępne formularze</Text>
+          <FlatList
+            data={formTypes}
+            renderItem={renderFormTypeItem}
+            keyExtractor={(item) => item.code}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.formTypesList}
+          />
+        </View>
+      )}
 
       {/* Upcoming Deadlines */}
       {deadlines.length > 0 && (
@@ -393,6 +455,52 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  formTypesList: {
+    marginBottom: 16,
+  },
+  formTypeItem: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 12,
+    width: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  formTypeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  formTypeCode: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  formTypeCategory: {
+    fontSize: 10,
+    color: '#666',
+    backgroundColor: '#F0F0F0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    textTransform: 'uppercase',
+  },
+  formTypeName: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  formTypeDescription: {
+    fontSize: 10,
+    color: '#666',
+    lineHeight: 14,
   },
 });
 

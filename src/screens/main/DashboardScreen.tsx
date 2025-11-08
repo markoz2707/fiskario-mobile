@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,20 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { RootState } from '../../store';
 import { setCurrentCompany } from '../../store/slices/companySlice';
-import { useGetCompaniesQuery } from '../../store/api/apiSlice';
+import {
+  useGetCompaniesQuery,
+  useGetDashboardSummaryQuery,
+  useGetRealTimeStatusQuery,
+  useGetRecentActivitiesQuery,
+  useGetUpcomingDeadlinesQuery,
+} from '../../store/api/apiSlice';
 
 interface KPICardProps {
   title: string;
@@ -20,27 +28,98 @@ interface KPICardProps {
   icon: string;
   color: string;
   onPress?: () => void;
+  isLoading?: boolean;
 }
 
-const KPICard: React.FC<KPICardProps> = ({ title, value, icon, color, onPress }) => (
+const KPICard: React.FC<KPICardProps> = ({ title, value, icon, color, onPress, isLoading }) => (
   <TouchableOpacity
     style={[styles.kpiCard, { borderLeftColor: color }]}
     onPress={onPress}
-    disabled={!onPress}
+    disabled={!onPress || isLoading}
   >
     <View style={styles.kpiHeader}>
-      <Icon name={icon} size={24} color={color} />
+      <Icon name={icon as any} size={24} color={color} />
       <Text style={styles.kpiTitle}>{title}</Text>
     </View>
-    <Text style={[styles.kpiValue, { color }]}>{value}</Text>
+    {isLoading ? (
+      <ActivityIndicator size="small" color={color} />
+    ) : (
+      <Text style={[styles.kpiValue, { color }]}>{value}</Text>
+    )}
   </TouchableOpacity>
 );
+
+interface ActivityItemProps {
+  activity: {
+    id: string;
+    type: string;
+    description: string;
+    timestamp: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+  };
+  onPress?: () => void;
+}
+
+const ActivityItem: React.FC<ActivityItemProps> = ({ activity, onPress }) => {
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'critical': return '#F44336';
+      case 'high': return '#FF9800';
+      case 'medium': return '#2196F3';
+      case 'low': return '#4CAF50';
+      default: return '#666';
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffHours < 1) return 'Przed chwilą';
+    if (diffHours < 24) return `${diffHours} godz. temu`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} dni temu`;
+  };
+
+  return (
+    <TouchableOpacity style={styles.activityItem} onPress={onPress}>
+      <View style={styles.activityContent}>
+        <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(activity.priority) }]} />
+        <View style={styles.activityText}>
+          <Text style={styles.activityDescription}>{activity.description}</Text>
+          <Text style={styles.activityTimestamp}>{formatTimestamp(activity.timestamp)}</Text>
+        </View>
+      </View>
+      <Icon name="chevron-right" size={20} color="#ccc" />
+    </TouchableOpacity>
+  );
+};
 
 const DashboardScreen: React.FC = () => {
   const dispatch = useDispatch();
   const { currentCompany } = useSelector((state: RootState) => state.company as any);
-  const { data: companies, isLoading, refetch } = useGetCompaniesQuery({});
-  const [refreshing, setRefreshing] = React.useState(false);
+  const { data: companies, isLoading: companiesLoading, refetch: refetchCompanies } = useGetCompaniesQuery({});
+
+  // Dashboard queries with current company filter
+  const { data: dashboardSummary, isLoading: summaryLoading, refetch: refetchSummary } = useGetDashboardSummaryQuery(
+    { companyId: currentCompany?.id },
+    { skip: !currentCompany }
+  );
+  const { data: realTimeStatus, refetch: refetchStatus } = useGetRealTimeStatusQuery(undefined, {
+    pollingInterval: 30000, // Poll every 30 seconds
+  });
+  const { data: recentActivities, isLoading: activitiesLoading, refetch: refetchActivities } = useGetRecentActivitiesQuery(
+    { companyId: currentCompany?.id, limit: 10 },
+    { skip: !currentCompany }
+  );
+  const { data: upcomingDeadlines, isLoading: deadlinesLoading, refetch: refetchDeadlines } = useGetUpcomingDeadlinesQuery(
+    { companyId: currentCompany?.id, limit: 5 },
+    { skip: !currentCompany }
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (companies && companies.length > 0 && !currentCompany) {
@@ -50,7 +129,13 @@ const DashboardScreen: React.FC = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([
+      refetchCompanies(),
+      refetchSummary(),
+      refetchStatus(),
+      refetchActivities(),
+      refetchDeadlines(),
+    ]);
     setRefreshing(false);
   };
 
@@ -67,59 +152,58 @@ const DashboardScreen: React.FC = () => {
     }
   };
 
-  // Mock KPI data - in real app this would come from API
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'PLN',
+    }).format(amount);
+  };
+
   const kpiData = [
     {
       title: 'Przychody (miesiąc)',
-      value: '45 230,50 zł',
+      value: dashboardSummary ? formatCurrency(dashboardSummary.totalRevenue) : '0 zł',
       icon: 'trending-up',
       color: '#4CAF50',
+      isLoading: summaryLoading,
     },
     {
-      title: 'Koszty (miesiąc)',
-      value: '12 450,80 zł',
-      icon: 'trending-down',
-      color: '#F44336',
-    },
-    {
-      title: 'Zysk netto',
-      value: '32 779,70 zł',
-      icon: 'account-balance',
+      title: 'Aktywne kontrahenci',
+      value: dashboardSummary ? dashboardSummary.activeCustomers.toString() : '0',
+      icon: 'people',
       color: '#2196F3',
-    },
-    {
-      title: 'Faktury do wystawienia',
-      value: '3',
-      icon: 'receipt',
-      color: '#FF9800',
-      onPress: () => {
-        // Navigate to invoicing
-      },
+      isLoading: summaryLoading,
     },
     {
       title: 'Deklaracje do złożenia',
-      value: '1',
+      value: dashboardSummary ? dashboardSummary.pendingDeclarations.toString() : '0',
       icon: 'assignment',
-      color: '#9C27B0',
-      onPress: () => {
-        // Navigate to declarations
-      },
+      color: '#FF9800',
+      isLoading: summaryLoading,
     },
     {
-      title: 'Powiadomienia',
-      value: '5',
-      icon: 'notifications',
-      color: '#607D8B',
-      onPress: () => {
-        // Navigate to notifications
-      },
+      title: 'Zaległe płatności',
+      value: dashboardSummary ? dashboardSummary.overduePayments.toString() : '0',
+      icon: 'warning',
+      color: dashboardSummary?.overduePayments > 0 ? '#F44336' : '#4CAF50',
+      isLoading: summaryLoading,
     },
   ];
 
-  if (isLoading && !companies) {
+  const getSystemStatusColor = (status: string) => {
+    switch (status) {
+      case 'operational': return '#4CAF50';
+      case 'degraded': return '#FF9800';
+      case 'maintenance': return '#2196F3';
+      default: return '#666';
+    }
+  };
+
+  if (companiesLoading && !companies) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Ładowanie...</Text>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Ładowanie danych...</Text>
       </View>
     );
   }
@@ -141,11 +225,94 @@ const DashboardScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
+      {/* System Status */}
+      {realTimeStatus && (
+        <View style={styles.statusCard}>
+          <View style={styles.statusHeader}>
+            <Icon name="info" size={20} color={getSystemStatusColor(realTimeStatus.systemStatus)} />
+            <Text style={styles.statusTitle}>Status systemu</Text>
+          </View>
+          <Text style={[styles.statusValue, { color: getSystemStatusColor(realTimeStatus.systemStatus) }]}>
+            {realTimeStatus.systemStatus === 'operational' ? 'Operacyjny' :
+             realTimeStatus.systemStatus === 'degraded' ? 'Obniżona wydajność' :
+             realTimeStatus.systemStatus === 'maintenance' ? 'Konserwacja' : 'Nieznany'}
+          </Text>
+          {realTimeStatus.alerts && realTimeStatus.alerts.length > 0 && (
+            <Text style={styles.alertText}>
+              {realTimeStatus.alerts.length} alertów aktywnych
+            </Text>
+          )}
+        </View>
+      )}
+
       {/* KPI Cards */}
       <View style={styles.kpiContainer}>
         {kpiData.map((kpi, index) => (
           <KPICard key={index} {...kpi} />
         ))}
+      </View>
+
+      {/* Recent Activities */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Ostatnie aktywności</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>Zobacz wszystkie</Text>
+          </TouchableOpacity>
+        </View>
+        {activitiesLoading ? (
+          <ActivityIndicator size="small" color="#007AFF" style={styles.loadingIndicator} />
+        ) : recentActivities && recentActivities.length > 0 ? (
+          <FlatList
+            data={recentActivities}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <ActivityItem activity={item} />}
+            scrollEnabled={false}
+          />
+        ) : (
+          <Text style={styles.emptyText}>Brak ostatnich aktywności</Text>
+        )}
+      </View>
+
+      {/* Upcoming Deadlines */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Nadchodzące terminy</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>Zobacz wszystkie</Text>
+          </TouchableOpacity>
+        </View>
+        {deadlinesLoading ? (
+          <ActivityIndicator size="small" color="#007AFF" style={styles.loadingIndicator} />
+        ) : upcomingDeadlines && upcomingDeadlines.length > 0 ? (
+          <FlatList
+            data={upcomingDeadlines}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.deadlineItem}>
+                <View style={styles.deadlineContent}>
+                  <View style={[styles.priorityIndicator, {
+                    backgroundColor: item.priority === 'critical' ? '#F44336' :
+                                   item.priority === 'high' ? '#FF9800' :
+                                   item.priority === 'medium' ? '#2196F3' : '#4CAF50'
+                  }]} />
+                  <View style={styles.deadlineText}>
+                    <Text style={styles.deadlineDescription}>{item.description}</Text>
+                    <Text style={styles.deadlineDate}>
+                      {item.daysRemaining === 0 ? 'Dzisiaj' :
+                       item.daysRemaining === 1 ? 'Jutro' :
+                       `Za ${item.daysRemaining} dni`}
+                    </Text>
+                  </View>
+                </View>
+                <Icon name="chevron-right" size={20} color="#ccc" />
+              </TouchableOpacity>
+            )}
+            scrollEnabled={false}
+          />
+        ) : (
+          <Text style={styles.emptyText}>Brak nadchodzących terminów</Text>
+        )}
       </View>
 
       {/* Quick Actions */}
@@ -184,6 +351,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+  },
   companyHeader: {
     backgroundColor: '#fff',
     padding: 15,
@@ -199,6 +370,36 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  statusCard: {
+    backgroundColor: '#fff',
+    margin: 10,
+    padding: 15,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statusTitle: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  statusValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  alertText: {
+    fontSize: 12,
+    color: '#FF9800',
+    marginTop: 4,
   },
   kpiContainer: {
     flexDirection: 'row',
@@ -233,11 +434,95 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  section: {
+    backgroundColor: '#fff',
+    margin: 10,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15,
     color: '#333',
+  },
+  seeAllText: {
+    color: '#007AFF',
+    fontSize: 14,
+  },
+  loadingIndicator: {
+    padding: 20,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    padding: 20,
+    fontStyle: 'italic',
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  activityContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  priorityIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  activityText: {
+    flex: 1,
+  },
+  activityDescription: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 2,
+  },
+  activityTimestamp: {
+    fontSize: 12,
+    color: '#666',
+  },
+  deadlineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  deadlineContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  deadlineText: {
+    flex: 1,
+  },
+  deadlineDescription: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 2,
+  },
+  deadlineDate: {
+    fontSize: 12,
+    color: '#666',
   },
   quickActions: {
     backgroundColor: '#fff',

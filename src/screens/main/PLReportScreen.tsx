@@ -12,6 +12,9 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
+import {
+  useGetWorkflowsQuery,
+} from '../../store/api/apiSlice';
 
 interface PLData {
   period: string;
@@ -55,6 +58,16 @@ const PLReportScreen: React.FC<PLReportScreenProps> = ({ route }) => {
   const authToken = useSelector((state: RootState) => state.auth.token);
 
   const { period, year } = route.params || {};
+
+  // Active workflows for reporting
+  const { data: workflowsData } = useGetWorkflowsQuery(
+    {
+      tenantId: 'default-tenant',
+      companyId: currentCompany?.id,
+      type: 'tax_calculation',
+    },
+    { skip: !currentCompany?.id }
+  );
 
   useEffect(() => {
     loadPLReport();
@@ -178,6 +191,7 @@ const PLReportScreen: React.FC<PLReportScreenProps> = ({ route }) => {
             width={Dimensions.get('window').width - 32}
             height={220}
             yAxisLabel="PLN "
+            yAxisSuffix=""
             chartConfig={{
               backgroundColor: '#ffffff',
               backgroundGradientFrom: '#ffffff',
@@ -331,6 +345,7 @@ const PLReportScreen: React.FC<PLReportScreenProps> = ({ route }) => {
               width={Dimensions.get('window').width - 32}
               height={220}
               yAxisLabel="PLN "
+              yAxisSuffix=""
               chartConfig={{
                 backgroundColor: '#ffffff',
                 backgroundGradientFrom: '#ffffff',
@@ -417,8 +432,17 @@ const PLReportScreen: React.FC<PLReportScreenProps> = ({ route }) => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Rachunek Zysków i Strat</Text>
-        <Text style={styles.headerPeriod}>Okres: {plData.period}</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Rachunek Zysków i Strat</Text>
+          <Text style={styles.headerPeriod}>Okres: {plData.period}</Text>
+        </View>
+        {workflowsData?.data && workflowsData.data.length > 0 && (
+          <View style={styles.workflowIndicator}>
+            <Text style={styles.workflowIndicatorText}>
+              Aktywne workflow: {workflowsData.data.filter((w: any) => w.state === 'processing').length}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Tabs */}
@@ -493,6 +517,24 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  workflowIndicator: {
+    backgroundColor: '#e8f4f8',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  workflowIndicatorText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 24,
