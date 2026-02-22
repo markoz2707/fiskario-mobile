@@ -36,6 +36,11 @@ export const apiSlice = createApi({
       'ZUSSummary',
       'Dashboard',
       'Workflow',
+      'KPiR',
+      'FixedAssets',
+      'AnnualTax',
+      'TaxOptimization',
+      'AiChat',
      ],
   endpoints: (builder) => ({
     // Auth endpoints
@@ -471,6 +476,183 @@ export const apiSlice = createApi({
       query: (type) => `/workflow-automation/workflow-definitions/${type}`,
       providesTags: ['Workflow'],
     }),
+
+    // KPiR endpoints
+    getKPiREntries: builder.query({
+      query: ({ companyId, year, month, page, limit }) => ({
+        url: `/kpir/${companyId}/entries`,
+        params: { year, month, page: page || 1, limit: limit || 20 },
+      }),
+      providesTags: ['KPiR'],
+    }),
+    getKPiRMonthlySummary: builder.query({
+      query: ({ companyId, year, month }) => `/kpir/${companyId}/summary/monthly?year=${year}&month=${month}`,
+      providesTags: ['KPiR'],
+    }),
+    getKPiRYearlySummary: builder.query({
+      query: ({ companyId, year }) => `/kpir/${companyId}/summary/yearly?year=${year}`,
+      providesTags: ['KPiR'],
+    }),
+    createKPiREntry: builder.mutation({
+      query: ({ companyId, ...data }) => ({
+        url: `/kpir/${companyId}/entries`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['KPiR'],
+    }),
+    bookSalesInvoice: builder.mutation({
+      query: ({ companyId, invoiceId }) => ({
+        url: `/kpir/${companyId}/book/sales-invoice/${invoiceId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['KPiR'],
+    }),
+
+    // Fixed Assets endpoints
+    getFixedAssets: builder.query({
+      query: ({ companyId, page, limit, status }) => ({
+        url: `/fixed-assets/${companyId}/assets`,
+        params: { page: page || 1, limit: limit || 20, status },
+      }),
+      providesTags: ['FixedAssets'],
+    }),
+    getFixedAssetSummary: builder.query({
+      query: (companyId) => `/fixed-assets/${companyId}/summary`,
+      providesTags: ['FixedAssets'],
+    }),
+    createFixedAsset: builder.mutation({
+      query: ({ companyId, ...data }) => ({
+        url: `/fixed-assets/${companyId}/assets`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['FixedAssets'],
+    }),
+    generateMonthlyDepreciation: builder.mutation({
+      query: ({ companyId, year, month }) => ({
+        url: `/fixed-assets/${companyId}/generate-monthly/${year}/${month}`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['FixedAssets'],
+    }),
+
+    // Annual Tax endpoints
+    getAnnualReturns: builder.query({
+      query: ({ companyId, year }) => ({
+        url: `/annual-tax/${companyId}/returns`,
+        params: { year },
+      }),
+      providesTags: ['AnnualTax'],
+    }),
+    createAnnualReturn: builder.mutation({
+      query: ({ companyId, ...data }) => ({
+        url: `/annual-tax/${companyId}/returns`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['AnnualTax'],
+    }),
+    calculateAnnualTax: builder.mutation({
+      query: ({ companyId, returnId }) => ({
+        url: `/annual-tax/${companyId}/returns/${returnId}/calculate`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['AnnualTax'],
+    }),
+    getAnnualTaxSummary: builder.query({
+      query: ({ companyId, returnId }) => `/annual-tax/${companyId}/returns/${returnId}/summary`,
+      providesTags: ['AnnualTax'],
+    }),
+    compareAnnualTaxForms: builder.mutation({
+      query: ({ companyId, returnId }) => ({
+        url: `/annual-tax/${companyId}/returns/${returnId}/compare`,
+        method: 'POST',
+      }),
+    }),
+
+    // Tax Optimization endpoints
+    compareTaxForms: builder.mutation({
+      query: ({ companyId, ...data }) => ({
+        url: `/tax-optimization/${companyId}/compare-forms`,
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    getTaxThresholds: builder.query({
+      query: ({ companyId, year }) => ({
+        url: `/tax-optimization/${companyId}/thresholds`,
+        params: { year },
+      }),
+      providesTags: ['TaxOptimization'],
+    }),
+    getTaxRecommendations: builder.query({
+      query: ({ companyId, year }) => ({
+        url: `/tax-optimization/${companyId}/recommendations`,
+        params: { year },
+      }),
+      providesTags: ['TaxOptimization'],
+    }),
+
+    // AI Chat endpoints
+    getChatConversations: builder.query({
+      query: ({ companyId, page, limit, status }) => ({
+        url: `/ai-chat/${companyId}/conversations`,
+        params: { page: page || 1, limit: limit || 20, status },
+      }),
+      providesTags: ['AiChat'],
+    }),
+    getChatConversation: builder.query({
+      query: ({ companyId, conversationId }) => `/ai-chat/${companyId}/conversations/${conversationId}`,
+      providesTags: ['AiChat'],
+    }),
+    createChatConversation: builder.mutation({
+      query: ({ companyId, ...data }) => ({
+        url: `/ai-chat/${companyId}/conversations`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['AiChat'],
+    }),
+    sendChatMessage: builder.mutation({
+      query: ({ companyId, conversationId, content }) => ({
+        url: `/ai-chat/${companyId}/conversations/${conversationId}/messages`,
+        method: 'POST',
+        body: { content },
+      }),
+      invalidatesTags: ['AiChat'],
+    }),
+    getSuggestedQuestions: builder.query({
+      query: ({ companyId, context }) => ({
+        url: `/ai-chat/${companyId}/suggested-questions`,
+        params: { context },
+      }),
+    }),
+
+    // ZUS endpoints
+    getZusEmployees: builder.query({
+      query: ({ companyId }) => `/zus/employees?company_id=${companyId}`,
+      providesTags: ['ZUSEmployees'],
+    }),
+    getZusContributions: builder.query({
+      query: ({ companyId, period }) => ({
+        url: '/zus/contributions',
+        params: { company_id: companyId, period },
+      }),
+      providesTags: ['ZUSContributions'],
+    }),
+    getZusRegistrations: builder.query({
+      query: ({ companyId }) => `/zus/registrations?company_id=${companyId}`,
+      providesTags: ['ZUSRegistrations'],
+    }),
+    getZusReports: builder.query({
+      query: ({ companyId }) => `/zus/reports?company_id=${companyId}`,
+      providesTags: ['ZUSReports'],
+    }),
+    getZusDeadlines: builder.query({
+      query: () => '/zus/deadlines',
+      providesTags: ['ZUSDeadlines'],
+    }),
   }),
 });
 
@@ -538,4 +720,37 @@ export const {
   useGetSmartDefaultsQuery,
   useGetWorkflowTypesQuery,
   useGetWorkflowDefinitionQuery,
+  // KPiR hooks
+  useGetKPiREntriesQuery,
+  useGetKPiRMonthlySummaryQuery,
+  useGetKPiRYearlySummaryQuery,
+  useCreateKPiREntryMutation,
+  useBookSalesInvoiceMutation,
+  // Fixed Assets hooks
+  useGetFixedAssetsQuery,
+  useGetFixedAssetSummaryQuery,
+  useCreateFixedAssetMutation,
+  useGenerateMonthlyDepreciationMutation,
+  // Annual Tax hooks
+  useGetAnnualReturnsQuery,
+  useCreateAnnualReturnMutation,
+  useCalculateAnnualTaxMutation,
+  useGetAnnualTaxSummaryQuery,
+  useCompareAnnualTaxFormsMutation,
+  // Tax Optimization hooks
+  useCompareTaxFormsMutation,
+  useGetTaxThresholdsQuery,
+  useGetTaxRecommendationsQuery,
+  // AI Chat hooks
+  useGetChatConversationsQuery,
+  useGetChatConversationQuery,
+  useCreateChatConversationMutation,
+  useSendChatMessageMutation,
+  useGetSuggestedQuestionsQuery,
+  // ZUS hooks
+  useGetZusEmployeesQuery,
+  useGetZusContributionsQuery,
+  useGetZusRegistrationsQuery,
+  useGetZusReportsQuery,
+  useGetZusDeadlinesQuery,
 } = apiSlice;

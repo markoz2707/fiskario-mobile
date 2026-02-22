@@ -23,18 +23,38 @@ import CustomerSelectorScreen from '../screens/main/CustomerSelectorScreen';
 import CostsScreen from '../screens/main/CostsScreen';
 import DeclarationsScreen from '../screens/main/DeclarationsScreen';
 import DeclarationCreatorScreen from '../screens/main/DeclarationCreatorScreen';
+import DeclarationPreviewScreen from '../screens/main/DeclarationPreviewScreen';
 import VATRegisterScreen from '../screens/main/VATRegisterScreen';
+import JPKV7Screen from '../screens/main/JPKV7Screen';
+import PLReportScreen from '../screens/main/PLReportScreen';
 import ZUSScreen from '../screens/main/ZUSScreen';
 import ReportsScreen from '../screens/main/ReportsScreen';
 import NotificationsScreen from '../screens/main/NotificationsScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 import TaxRulesScreen from '../screens/main/TaxRulesScreen';
 import DeadlinesScreen from '../screens/main/DeadlinesScreen';
+import KPiRScreen from '../screens/main/KPiRScreen';
+import FixedAssetsScreen from '../screens/main/FixedAssetsScreen';
+import AnnualTaxScreen from '../screens/main/AnnualTaxScreen';
+import TaxOptimizationScreen from '../screens/main/TaxOptimizationScreen';
+import AiChatScreen from '../screens/main/AiChatScreen';
+
+// Orphaned screens wired in
+import EDeklaracjeScreen from '../screens/EDeklaracjeScreen';
+import UPOListScreen from '../screens/UPOListScreen';
+import UPOViewScreen from '../screens/UPOViewScreen';
+import ReceivedInvoicesScreen from '../screens/ReceivedInvoicesScreen';
+import InvoiceApprovalScreen from '../screens/InvoiceApprovalScreen';
 
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   CompanyStack: undefined;
+  KPiR: undefined;
+  FixedAssets: undefined;
+  AnnualTax: undefined;
+  TaxOptimization: undefined;
+  AiChat: undefined;
 };
 
 export type AuthStackParamList = {
@@ -65,6 +85,21 @@ export type InvoicingStackParamList = {
    InvoiceCreator: { selectedCustomer?: any } | undefined;
    CustomerSelector: { onCustomerSelected?: (customer: any) => void };
    CustomerCreator: { onCustomerCreated?: (customer: any) => void };
+   InvoiceScanner: undefined;
+   ReceivedInvoices: undefined;
+   InvoiceApproval: { invoiceId: string };
+ };
+
+export type DeclarationsStackParamList = {
+   DeclarationsList: undefined;
+   DeclarationCreator: undefined;
+   DeclarationPreview: { declarationData?: any; formData?: any; formType?: any };
+   VATRegister: undefined;
+   JPKV7: undefined;
+   PLReport: { period?: string; year?: number };
+   EDeklaracje: undefined;
+   UPOList: { companyId: string };
+   UPOView: { upoNumber: string };
  };
 
 export type SettingsStackParamList = {
@@ -78,7 +113,8 @@ const RootStack = createStackNavigator<RootStackParamList>();
 const AuthStack = createStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 const CompanyStack = createStackNavigator<CompanyStackParamList>();
-const InvoicingStack = createStackNavigator<InvoicingStackParamList>();
+const InvoicingStackNav = createStackNavigator<InvoicingStackParamList>();
+const DeclarationsStack = createStackNavigator<DeclarationsStackParamList>();
 const SettingsStack = createStackNavigator<SettingsStackParamList>();
 
 const AuthNavigator = () => {
@@ -101,17 +137,17 @@ const CompanyNavigator = () => {
       <CompanyStack.Screen
         name="CompanyDetail"
         component={DashboardScreen}
-        options={{ title: 'Szczegóły firmy' }}
+        options={{ title: 'Szczegoly firmy' }}
       />
       <CompanyStack.Screen
          name="CompanyCreator"
          component={CompanyCreatorScreen}
-         options={{ title: 'Dodaj firmę' }}
+         options={{ title: 'Dodaj firme' }}
        />
       <CompanyStack.Screen
          name="CompanyEditor"
          component={CompanyEditorScreen}
-         options={{ title: 'Edytuj firmę' }}
+         options={{ title: 'Edytuj firme' }}
        />
     </CompanyStack.Navigator>
   );
@@ -119,35 +155,102 @@ const CompanyNavigator = () => {
 
 const InvoicingNavigator = () => {
    return (
-     <InvoicingStack.Navigator>
-       <InvoicingStack.Screen
+     <InvoicingStackNav.Navigator>
+       <InvoicingStackNav.Screen
          name="InvoiceList"
          component={InvoicingScreen}
          options={{ headerShown: false }}
        />
-       <InvoicingStack.Screen
+       <InvoicingStackNav.Screen
          name="InvoiceDetail"
          component={InvoicePreviewScreen}
-         options={{ title: 'Szczegóły faktury' }}
+         options={{ title: 'Szczegoly faktury' }}
        />
-       <InvoicingStack.Screen
+       <InvoicingStackNav.Screen
          name="InvoiceCreator"
          component={InvoiceCreatorScreen}
          options={{ title: 'Nowa faktura' }}
        />
-       <InvoicingStack.Screen
+       <InvoicingStackNav.Screen
          name="CustomerSelector"
          component={CustomerSelectorScreen}
          options={{ title: 'Wybierz kontrahenta' }}
        />
-       <InvoicingStack.Screen
+       <InvoicingStackNav.Screen
          name="CustomerCreator"
          component={CompanyCreatorScreen}
          options={{ title: 'Dodaj kontrahenta' }}
        />
-     </InvoicingStack.Navigator>
+       <InvoicingStackNav.Screen
+         name="InvoiceScanner"
+         component={InvoiceScannerScreen}
+         options={{ title: 'Skanuj fakture', headerShown: false }}
+       />
+       <InvoicingStackNav.Screen
+         name="ReceivedInvoices"
+         component={ReceivedInvoicesScreen}
+         options={{ title: 'Faktury otrzymane' }}
+       />
+       <InvoicingStackNav.Screen
+         name="InvoiceApproval"
+         component={InvoiceApprovalScreen}
+         options={{ title: 'Zatwierdzanie faktury' }}
+       />
+     </InvoicingStackNav.Navigator>
    );
  };
+
+const DeclarationsNavigator = () => {
+  return (
+    <DeclarationsStack.Navigator>
+      <DeclarationsStack.Screen
+        name="DeclarationsList"
+        component={DeclarationsScreen}
+        options={{ headerShown: false }}
+      />
+      <DeclarationsStack.Screen
+        name="DeclarationCreator"
+        component={DeclarationCreatorScreen}
+        options={{ title: 'Nowa deklaracja' }}
+      />
+      <DeclarationsStack.Screen
+        name="DeclarationPreview"
+        component={DeclarationPreviewScreen}
+        options={{ title: 'Podglad deklaracji' }}
+      />
+      <DeclarationsStack.Screen
+        name="VATRegister"
+        component={VATRegisterScreen}
+        options={{ title: 'Rejestr VAT' }}
+      />
+      <DeclarationsStack.Screen
+        name="JPKV7"
+        component={JPKV7Screen}
+        options={{ title: 'JPK_V7' }}
+      />
+      <DeclarationsStack.Screen
+        name="PLReport"
+        component={PLReportScreen}
+        options={{ title: 'Rachunek Zyskow i Strat' }}
+      />
+      <DeclarationsStack.Screen
+        name="EDeklaracje"
+        component={EDeklaracjeScreen}
+        options={{ title: 'e-Deklaracje' }}
+      />
+      <DeclarationsStack.Screen
+        name="UPOList"
+        component={UPOListScreen}
+        options={{ title: 'Lista UPO' }}
+      />
+      <DeclarationsStack.Screen
+        name="UPOView"
+        component={UPOViewScreen}
+        options={{ title: 'Szczegoly UPO' }}
+      />
+    </DeclarationsStack.Navigator>
+  );
+};
 
 const SettingsNavigator = () => {
   return (
@@ -170,7 +273,7 @@ const SettingsNavigator = () => {
       <SettingsStack.Screen
         name="TaxRules"
         component={TaxRulesScreen}
-        options={{ title: 'Reguły podatkowe' }}
+        options={{ title: 'Reguly podatkowe' }}
       />
     </SettingsStack.Navigator>
   );
@@ -233,7 +336,7 @@ const MainTabNavigator = () => {
       />
       <MainTab.Screen
         name="Declarations"
-        component={DeclarationsScreen}
+        component={DeclarationsNavigator}
         options={{ title: 'Deklaracje' }}
       />
       <MainTab.Screen
@@ -265,6 +368,11 @@ const AppNavigator = () => {
           <>
             <RootStack.Screen name="Main" component={MainTabNavigator} />
             <RootStack.Screen name="CompanyStack" component={CompanyNavigator} />
+            <RootStack.Screen name="KPiR" component={KPiRScreen} options={{ title: 'Ksiega Przychodow i Rozchodow' }} />
+            <RootStack.Screen name="FixedAssets" component={FixedAssetsScreen} options={{ title: 'Srodki Trwale' }} />
+            <RootStack.Screen name="AnnualTax" component={AnnualTaxScreen} options={{ title: 'Rozliczenie Roczne PIT' }} />
+            <RootStack.Screen name="TaxOptimization" component={TaxOptimizationScreen} options={{ title: 'Optymalizacja Podatkowa' }} />
+            <RootStack.Screen name="AiChat" component={AiChatScreen} options={{ title: 'AI Ksiegowa' }} />
           </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />

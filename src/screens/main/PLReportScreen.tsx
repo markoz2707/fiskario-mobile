@@ -55,14 +55,15 @@ const PLReportScreen: React.FC<PLReportScreenProps> = ({ route }) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'revenue' | 'costs' | 'profit'>('summary');
 
   const { currentCompany } = useSelector((state: RootState) => state.company);
-  const authToken = useSelector((state: RootState) => state.auth.token);
+  const { token: authToken, user } = useSelector((state: RootState) => state.auth);
+  const tenantId = user?.tenantId || 'default-tenant';
 
   const { period, year } = route.params || {};
 
   // Active workflows for reporting
   const { data: workflowsData } = useGetWorkflowsQuery(
     {
-      tenantId: 'default-tenant',
+      tenantId: tenantId,
       companyId: currentCompany?.id,
       type: 'tax_calculation',
     },

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,81 +7,108 @@ import {
   ScrollView,
   Alert,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { MainTabParamList } from '../../navigation/AppNavigator';
-
-interface ZUSSummary {
-  totalEmployees: number;
-  totalContributions: number;
-  upcomingDeadlines: number;
-  pendingSubmissions: number;
-}
+import {
+  useGetZusEmployeesQuery,
+  useGetZusContributionsQuery,
+  useGetZusDeadlinesQuery,
+} from '../../store/api/apiSlice';
 
 const ZUSScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { currentCompany } = useSelector((state: RootState) => state.company as any);
-  const [zusSummary, setZusSummary] = useState<ZUSSummary>({
-    totalEmployees: 0,
-    totalContributions: 0,
-    upcomingDeadlines: 0,
-    pendingSubmissions: 0,
-  });
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadZUSSummary();
-  }, [currentCompany]);
+  // RTK Query hooks
+  const {
+    data: employeesData,
+    isLoading: isLoadingEmployees,
+    error: employeesError,
+    refetch: refetchEmployees,
+  } = useGetZusEmployeesQuery(
+    { companyId: currentCompany?.id },
+    { skip: !currentCompany?.id }
+  );
 
-  const loadZUSSummary = async () => {
-    if (!currentCompany) return;
+  const {
+    data: contributionsData,
+    isLoading: isLoadingContributions,
+    error: contributionsError,
+    refetch: refetchContributions,
+  } = useGetZusContributionsQuery(
+    { companyId: currentCompany?.id },
+    { skip: !currentCompany?.id }
+  );
 
-    try {
-      // TODO: Implement API call to get ZUS summary
-      // const response = await zusAPI.getSummary(currentCompany.id);
-      // setZusSummary(response.data);
+  const {
+    data: deadlinesData,
+    isLoading: isLoadingDeadlines,
+    refetch: refetchDeadlines,
+  } = useGetZusDeadlinesQuery(undefined, { skip: !currentCompany?.id });
 
-      // Mock data for now
-      setZusSummary({
-        totalEmployees: 5,
-        totalContributions: 12500.50,
-        upcomingDeadlines: 2,
-        pendingSubmissions: 1,
-      });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load ZUS summary');
-    }
-  };
+  const isLoading = isLoadingEmployees || isLoadingContributions || isLoadingDeadlines;
+
+  // Derive summary from real data
+  const totalEmployees = employeesData?.data?.length ?? employeesData?.length ?? 0;
+  const totalContributions = contributionsData?.data?.totalAmount
+    ?? contributionsData?.totalAmount
+    ?? (Array.isArray(contributionsData?.data)
+      ? contributionsData.data.reduce((sum: number, c: any) => sum + (c.amount || 0), 0)
+      : 0);
+  const upcomingDeadlines = deadlinesData?.data?.length ?? deadlinesData?.length ?? 0;
+  const pendingSubmissions = contributionsData?.data?.pendingCount
+    ?? (Array.isArray(contributionsData?.data)
+      ? contributionsData.data.filter((c: any) => c.status === 'pending').length
+      : 0);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadZUSSummary();
-    setRefreshing(false);
+    try {
+      await Promise.all([
+        refetchEmployees(),
+        refetchContributions(),
+        refetchDeadlines(),
+      ]);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to refresh ZUS data');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const navigateToEmployees = () => {
-    Alert.alert('Info', 'Employee management screen will be implemented');
+    navigation.navigate('CompanyStack', { screen: 'CompanyList' });
   };
 
   const navigateToRegistrations = () => {
-    Alert.alert('Info', 'Registration screen will be implemented');
+    navigation.navigate('Declarations');
   };
 
   const navigateToReports = () => {
-    Alert.alert('Info', 'Reports screen will be implemented');
+    navigation.navigate('Settings', { screen: 'Reports' });
   };
 
   const navigateToDeadlines = () => {
-    Alert.alert('Info', 'Deadlines screen will be implemented');
+    navigation.navigate('Deadlines');
   };
 
   if (!currentCompany) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>No company selected</Text>
+      </View>
+    );
+  }
+
+  if (isLoading && !refreshing) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#2E86AB" />
+        <Text style={styles.loadingText}>Loading ZUS data...</Text>
       </View>
     );
   }
@@ -98,22 +125,33 @@ const ZUSScreen: React.FC = () => {
         <Text style={styles.subtitle}>Social Insurance Administration</Text>
       </View>
 
+      {/* Error Banner */}
+      {(employeesError || contributionsError) && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>
+            Could not load some ZUS data. Pull to refresh.
+          </Text>
+        </View>
+      )}
+
       {/* Summary Cards */}
       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{zusSummary.totalEmployees}</Text>
+          <Text style={styles.summaryNumber}>{totalEmployees}</Text>
           <Text style={styles.summaryLabel}>Employees</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>zł {zusSummary.totalContributions.toFixed(2)}</Text>
+          <Text style={styles.summaryNumber}>
+            {typeof totalContributions === 'number' ? `zl ${totalContributions.toFixed(2)}` : 'zl 0.00'}
+          </Text>
           <Text style={styles.summaryLabel}>Monthly Contributions</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{zusSummary.upcomingDeadlines}</Text>
+          <Text style={styles.summaryNumber}>{upcomingDeadlines}</Text>
           <Text style={styles.summaryLabel}>Upcoming Deadlines</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{zusSummary.pendingSubmissions}</Text>
+          <Text style={styles.summaryNumber}>{pendingSubmissions}</Text>
           <Text style={styles.summaryLabel}>Pending Submissions</Text>
         </View>
       </View>
@@ -145,17 +183,26 @@ const ZUSScreen: React.FC = () => {
       <View style={styles.quickActionsContainer}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-        <TouchableOpacity style={styles.quickActionButton}>
+        <TouchableOpacity
+          style={styles.quickActionButton}
+          onPress={navigateToEmployees}
+        >
           <Text style={styles.quickActionIcon}>➕</Text>
           <Text style={styles.quickActionText}>Add Employee</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionButton}>
+        <TouchableOpacity
+          style={styles.quickActionButton}
+          onPress={navigateToRegistrations}
+        >
           <Text style={styles.quickActionIcon}>📝</Text>
           <Text style={styles.quickActionText}>Create Registration</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionButton}>
+        <TouchableOpacity
+          style={styles.quickActionButton}
+          onPress={navigateToReports}
+        >
           <Text style={styles.quickActionIcon}>📄</Text>
           <Text style={styles.quickActionText}>Generate Report</Text>
         </TouchableOpacity>
@@ -192,6 +239,24 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     color: '#666',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorBanner: {
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    marginHorizontal: 15,
+    marginTop: 10,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+  },
+  errorBannerText: {
+    fontSize: 14,
+    color: '#E65100',
   },
   summaryContainer: {
     flexDirection: 'row',

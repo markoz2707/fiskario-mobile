@@ -52,6 +52,8 @@ interface Invoice {
 const InvoicingScreen: React.FC<Props> = ({ navigation }) => {
   // Redux state
   const { currentCompany } = useSelector((state: RootState) => state.company);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const tenantId = user?.tenantId || 'default-tenant';
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -69,7 +71,7 @@ const InvoicingScreen: React.FC<Props> = ({ navigation }) => {
   // Smart defaults for invoice creation
   const { data: smartDefaults } = useGetSmartDefaultsQuery(
     {
-      tenant_id: 'default-tenant', // TODO: Get from auth context
+      tenant_id: tenantId,
       companyId: currentCompany?.id || '',
       workflowType: 'invoice_creation',
     },
@@ -79,7 +81,7 @@ const InvoicingScreen: React.FC<Props> = ({ navigation }) => {
   // Active workflows
   const { data: workflowsData } = useGetWorkflowsQuery(
     {
-      tenantId: 'default-tenant', // TODO: Get from auth context
+      tenantId: tenantId,
       companyId: currentCompany?.id,
       type: 'invoice_creation',
     },
@@ -299,7 +301,7 @@ const InvoicingScreen: React.FC<Props> = ({ navigation }) => {
     try {
       // Create workflow for invoice creation
       const workflow = await createWorkflow({
-        tenant_id: 'default-tenant',
+        tenant_id: tenantId,
         type: 'invoice_creation',
         trigger: 'manual',
         initialData: {

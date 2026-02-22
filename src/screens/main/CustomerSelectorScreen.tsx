@@ -43,6 +43,8 @@ interface Customer {
 
 const CustomerSelectorScreen: React.FC<Props> = ({ navigation }) => {
   const { currentCompany } = useSelector((state: RootState) => state.company);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const tenantId = user?.tenantId || 'default-tenant';
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +90,7 @@ const CustomerSelectorScreen: React.FC<Props> = ({ navigation }) => {
   // Smart defaults for customer onboarding
   const { data: smartDefaults } = useGetSmartDefaultsQuery(
     {
-      tenant_id: 'default-tenant',
+      tenant_id: tenantId,
       companyId: currentCompany?.id || '',
       workflowType: 'customer_onboarding',
     },
@@ -176,7 +178,7 @@ const CustomerSelectorScreen: React.FC<Props> = ({ navigation }) => {
     try {
       // Create workflow for customer onboarding
       const workflow = await createWorkflow({
-        tenant_id: 'default-tenant',
+        tenant_id: tenantId,
         type: 'customer_onboarding',
         trigger: 'manual',
         initialData: {
