@@ -1,4 +1,5 @@
 import { apiSlice } from '../store/api/apiSlice';
+import { API_BASE_URL } from '../config';
 
 export interface AutoFillData {
   companyInfo: {
@@ -50,7 +51,7 @@ export class DeclarationAutoFillService {
       // Get VAT register data for the period
       const token = 'mock_token'; // This should be properly retrieved
       const vatRegistersResponse = await fetch(
-        `http://localhost:3000/declarations/vat-register/${period}/${companyId}`,
+        `${API_BASE_URL}/declarations/vat-register/${period}/${companyId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -124,7 +125,7 @@ export class DeclarationAutoFillService {
       // Note: Token should be passed as parameter or retrieved from secure storage
       const token = 'mock_token'; // This should be properly retrieved
       const vatRegistersResponse = await fetch(
-        `http://localhost:3000/declarations/vat-register/${period}/${companyId}`,
+        `${API_BASE_URL}/declarations/vat-register/${period}/${companyId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -207,7 +208,7 @@ export class DeclarationAutoFillService {
       // Get tax calculation data for the period
       const token = 'mock_token'; // This should be properly retrieved
       const calculationResponse = await fetch(
-        `http://localhost:3000/declarations/calculate/pit-advance`,
+        `${API_BASE_URL}/declarations/calculate/pit-advance`,
         {
           method: 'POST',
           headers: {
@@ -269,7 +270,7 @@ export class DeclarationAutoFillService {
       // Get tax calculation data for the period
       const token = 'mock_token'; // This should be properly retrieved
       const calculationResponse = await fetch(
-        `http://localhost:3000/declarations/calculate/cit`,
+        `${API_BASE_URL}/declarations/calculate/cit`,
         {
           method: 'POST',
           headers: {
@@ -337,7 +338,7 @@ export class DeclarationAutoFillService {
       // Get VAT registers for the period
       const token = 'mock_token'; // This should be properly retrieved
       const vatRegistersResponse = await fetch(
-        `http://localhost:3000/declarations/vat-register/${period}/${companyId}`,
+        `${API_BASE_URL}/declarations/vat-register/${period}/${companyId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

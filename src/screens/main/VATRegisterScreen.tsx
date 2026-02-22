@@ -13,6 +13,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { API_BASE_URL } from '../../config';
 
 interface VATRegisterItem {
   id: string;
@@ -48,7 +49,7 @@ const VATRegisterScreen = ({ navigation }: any) => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3000/declarations/vat-register/${selectedPeriod}/${currentCompany.id}${filter !== 'all' ? `?type=${filter}` : ''}`,
+        `${API_BASE_URL}/declarations/vat-register/${selectedPeriod}/${currentCompany.id}${filter !== 'all' ? `?type=${filter}` : ''}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

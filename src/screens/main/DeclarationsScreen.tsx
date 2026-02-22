@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { apiSlice } from '../../store/api/apiSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { API_BASE_URL } from '../../config';
 
 interface DeclarationItem {
   id: string;
@@ -75,7 +76,7 @@ const DeclarationsScreen = ({ navigation }: any) => {
     try {
       // Use the declarations API to get deadlines
       const response = await fetch(
-        `http://localhost:3000/declarations/deadlines/${currentCompany.id}`,
+        `${API_BASE_URL}/declarations/deadlines/${currentCompany.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -99,7 +100,7 @@ const DeclarationsScreen = ({ navigation }: any) => {
     try {
       // Load available tax form types from the backend
       const response = await fetch(
-        `http://localhost:3000/tax-rules/forms`,
+        `${API_BASE_URL}/tax-rules/forms`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

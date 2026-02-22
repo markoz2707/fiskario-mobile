@@ -12,6 +12,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { API_BASE_URL } from '../../config';
 
 interface DeclarationForm {
   type: 'VAT-7' | 'JPK_V7M' | 'JPK_V7K' | 'PIT-36' | 'CIT-8';
@@ -76,7 +77,7 @@ const DeclarationCreatorScreen = ({ navigation }: any) => {
           break;
       }
 
-      const response = await fetch(`http://localhost:3000/declarations/${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/declarations/${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -112,7 +113,7 @@ const DeclarationCreatorScreen = ({ navigation }: any) => {
     try {
       setLoading(true);
 
-      const response = await fetch('http://localhost:3000/declarations/generate-xml', {
+      const response = await fetch(`${API_BASE_URL}/declarations/generate-xml`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -179,7 +180,7 @@ const DeclarationCreatorScreen = ({ navigation }: any) => {
     try {
       setLoading(true);
 
-      const response = await fetch('http://localhost:3000/declarations/create', {
+      const response = await fetch(`${API_BASE_URL}/declarations/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

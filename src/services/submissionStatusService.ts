@@ -1,4 +1,5 @@
 import { apiSlice } from '../store/api/apiSlice';
+import { API_BASE_URL } from '../config';
 
 export interface SubmissionStatus {
   id: string;
@@ -136,7 +137,7 @@ export class SubmissionStatusService {
     try {
       const token = 'mock_token'; // This should be properly retrieved
 
-      const response = await fetch(`http://localhost:3000/declarations/retry/${declarationId}`, {
+      const response = await fetch(`${API_BASE_URL}/declarations/retry/${declarationId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -189,7 +190,7 @@ export class SubmissionStatusService {
     try {
       const token = 'mock_token'; // This should be properly retrieved
 
-      const response = await fetch(`http://localhost:3000/declarations/status/${declarationId}`, {
+      const response = await fetch(`${API_BASE_URL}/declarations/status/${declarationId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

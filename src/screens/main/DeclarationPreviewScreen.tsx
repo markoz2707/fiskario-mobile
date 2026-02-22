@@ -12,6 +12,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { API_BASE_URL } from '../../config';
 
 interface DeclarationPreviewData {
   type: string;
@@ -71,7 +72,7 @@ const DeclarationPreviewScreen = ({ navigation, route }: any) => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/declarations/signature-methods/${currentCompany.id}`,
+        `${API_BASE_URL}/declarations/signature-methods/${currentCompany.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -141,7 +142,7 @@ const DeclarationPreviewScreen = ({ navigation, route }: any) => {
     try {
       setGenerating(true);
 
-      const response = await fetch('http://localhost:3000/declarations/generate-xml', {
+      const response = await fetch(`${API_BASE_URL}/declarations/generate-xml`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -221,7 +222,7 @@ const DeclarationPreviewScreen = ({ navigation, route }: any) => {
     try {
       setGenerating(true);
 
-      const response = await fetch('http://localhost:3000/declarations/submit', {
+      const response = await fetch(`${API_BASE_URL}/declarations/submit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
